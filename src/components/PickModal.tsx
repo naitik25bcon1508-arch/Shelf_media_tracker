@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Dices, X } from "lucide-react";
 import type { ShelfItem } from "@/lib/types";
 import Poster from "@/components/Poster";
 import { STATUS_OPTIONS } from "@/lib/types";
@@ -6,13 +7,15 @@ import { STATUS_OPTIONS } from "@/lib/types";
 interface Props {
   item: ShelfItem;
   onClose: () => void;
+  onPickAgain: () => void;
 }
 
-export default function PickModal({ item, onClose }: Props) {
+export default function PickModal({ item, onClose, onPickAgain }: Props) {
   const status = STATUS_OPTIONS.find((o) => o.value === item.status);
 
-  return (
+  return createPortal(
     <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ backgroundColor: "var(--color-overlay)" }}
       onClick={onClose}
     >
@@ -56,13 +59,23 @@ export default function PickModal({ item, onClose }: Props) {
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full mt-5 bg-hover hover:opacity-80 text-primary font-medium rounded-lg py-2.5 transition-opacity"
-        >
-          Close
-        </button>
+        <div className="flex gap-3 mt-5">
+          <button
+            onClick={onPickAgain}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-hover hover:opacity-80 text-primary font-medium rounded-lg py-2.5 transition-opacity"
+          >
+            <Dices className="w-4 h-4" />
+            Pick again
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 text-white dark:text-neutral-950 font-semibold rounded-lg py-2.5 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

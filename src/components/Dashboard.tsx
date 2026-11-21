@@ -64,10 +64,10 @@ export default function Dashboard({ username, onLogout }: Props) {
     .filter((i) => (statusFilter === "all" ? true : i.status === statusFilter))
     .filter((i) => (query ? i.title.toLowerCase().includes(query) : true));
 
-  function pickForMe() {
+  function pickForMe(): ShelfItem | null {
     const wantTo = items.filter((i) => i.status === "want");
-    if (wantTo.length === 0) return;
-    setPicked(wantTo[Math.floor(Math.random() * wantTo.length)]);
+    if (wantTo.length === 0) return null;
+    return wantTo[Math.floor(Math.random() * wantTo.length)];
   }
 
   const hasAnyItems = items.length > 0;
@@ -85,7 +85,10 @@ export default function Dashboard({ username, onLogout }: Props) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={pickForMe}
+              onClick={() => {
+                const next = pickForMe();
+                if (next) setPicked(next);
+              }}
               disabled={!items.some((i) => i.status === "want")}
               className="hidden sm:flex items-center gap-1.5 bg-hover hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed text-primary text-sm font-medium rounded-lg px-3 py-1.5 transition-opacity"
             >
@@ -158,7 +161,10 @@ export default function Dashboard({ username, onLogout }: Props) {
         </div>
 
         <button
-          onClick={pickForMe}
+          onClick={() => {
+            const next = pickForMe();
+            if (next) setPicked(next);
+          }}
           disabled={!items.some((i) => i.status === "want")}
           className="sm:hidden w-full flex items-center justify-center gap-1.5 bg-hover disabled:opacity-50 text-primary text-sm font-medium rounded-lg px-3 py-2.5 mb-4 transition-opacity"
         >
@@ -241,7 +247,16 @@ export default function Dashboard({ username, onLogout }: Props) {
         />
       )}
 
-      {picked && <PickModal item={picked} onClose={() => setPicked(null)} />}
+      {picked && (
+        <PickModal
+          item={picked}
+          onClose={() => setPicked(null)}
+          onPickAgain={() => {
+            const next = pickForMe();
+            if (next) setPicked(next);
+          }}
+        />
+      )}
     </div>
   );
 }
