@@ -7,7 +7,7 @@ import Stats from "@/components/Stats";
 import ThemeToggle from "@/components/ThemeToggle";
 import type { ItemStatus, ShelfItem } from "@/lib/types";
 import { STATUS_OPTIONS } from "@/lib/types";
-import { getItems, saveItems } from "@/lib/storage";
+import { getItems, loadDB, saveDB, normName } from "@/lib/storage";
 
 interface Props {
   username: string;
@@ -37,14 +37,15 @@ export default function Dashboard({ username, onLogout }: Props) {
   const [formOpen, setFormOpen] = useState(false);
   const deleteTarget = useRef<string | null>(null);
 
-  function persist(next: ShelfItem[]) {
-    setItems(next);
-    saveItems(username, next);
-  }
-
   function handleSave(item: ShelfItem) {
-    const exists = items.some((i) => i.id === item.id);
-    persist(exists ? items.map((i) => (i.id === item.id ? item : i)) : [item, ...items]);
+    const key = normName(username);
+    const db = loadDB();
+    const exists = (db.items[key] ?? []).some((i) => i.id === item.id);
+    db.items[key] = exists
+      ? (db.items[key] ?? []).map((i) => (i.id === item.id ? item : i))
+      : [item, ...(db.items[key] ?? [])];
+    saveDB(db);
+    setItems(db.items[key]);
     setFormOpen(false);
     setEditing(null);
   }
@@ -53,7 +54,11 @@ export default function Dashboard({ username, onLogout }: Props) {
     deleteTarget.current = id;
     const item = items.find((i) => i.id === id);
     if (item && window.confirm(`Delete "${item.title}" from your shelf?`)) {
-      persist(items.filter((i) => i.id !== id));
+      const key = normName(username);
+      const db = loadDB();
+      db.items[key] = (db.items[key] ?? []).filter((i) => i.id !== id);
+      saveDB(db);
+      setItems(db.items[key]);
     }
     deleteTarget.current = null;
   }

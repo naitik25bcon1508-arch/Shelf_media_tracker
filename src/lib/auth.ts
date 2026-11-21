@@ -1,10 +1,6 @@
-const USERS_KEY = "shelf:users";
-const SESSION_KEY = "shelf:session";
+import { loadDB, saveDB, normName, type StoredUser } from "@/lib/storage";
 
-export interface StoredUser {
-  username: string;
-  hash: string;
-}
+const SESSION_KEY = "shelf:session";
 
 export async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);
@@ -12,19 +8,6 @@ export async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function readUsers(): StoredUser[] {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? (JSON.parse(raw) as StoredUser[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 export async function signUp(
@@ -35,15 +18,15 @@ export async function signUp(
   if (name.length < 3) return { ok: false, error: "Username must be at least 3 characters." };
   if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
 
-  const users = readUsers();
-  if (users.some((u) => u.username.toLowerCase() === name.toLowerCase())) {
-    return { ok: false, error: "That username is already taken." };
-  }
-
+  const key = normName(name);
   const hash = await hashPassword(password);
-  users.push({ username: name, hash });
-  writeUsers(users);
-  signIn(name, hash);
+  const db = loadDB();
+  if (db.users[key]) return { ok: false, error: "That username is already taken." };
+
+  db.users[key] = { username: key, hash };
+  db.items[key] = [];
+  saveDB(db);
+  signIn(key, hash);
   return { ok: true };
 }
 
@@ -51,13 +34,15 @@ export async function login(
   username: string,
   password: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const name = username.trim();
-  const hash = await hashPassword(password);
-  const user = readUsers().find(
-    (u) => u.username.toLowerCase() === name.toLowerCase() && u.hash === hash
-  );
+  const key = normName(username);
+  const db = loadDB();
+  const user = db.users[key];
   if (!user) return { ok: false, error: "Wrong username or password." };
-  signIn(user.username, hash);
+
+  const hash = await hashPassword(password);
+  if (user.hash !== hash) return { ok: false, error: "Wrong username or password." };
+
+  signIn(key, hash);
   return { ok: true };
 }
 
@@ -70,7 +55,7 @@ export function getSession(): string | null {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw) as { username: string; hash: string };
-    const user = readUsers().find((u) => u.username === session.username);
+    const user: StoredUser | undefined = loadDB().users[session.username];
     return user && user.hash === session.hash ? session.username : null;
   } catch {
     return null;

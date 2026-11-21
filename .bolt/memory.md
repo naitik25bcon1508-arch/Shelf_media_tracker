@@ -31,9 +31,19 @@
 - Stats: total movies watched, total books read (status Done), average rating across rated items, completions-per-month bar chart (last 6 months)
 - Theme toggle appears on both sign-in and dashboard headers
 - Card compaction restricted to size/layout only; no feature or color changes, no new files
+- Storage: single localStorage key `"shelf_db"` with shape `{users:{}, items:{}}`; `loadDB()` reads/parses fresh each call (try/catch, default empty); `saveDB(db)` writes back
+- No cached users/items as separate source of truth; every handler reads fresh at call time, mutates, saves, then sets React state from saved data
+- Item IDs: `crypto.randomUUID()`
+- Usernames normalized: lowercase + trim on both signup and login
+- Signup writes `db.users[username]` and `db.items[username] = []`
+- After login/refresh, items come from `loadDB().items[username]`
+- No useEffect that writes to localStorage existed (none removed)
+- Existing data under old scattered keys migrated automatically on first load
+- Session key kept original to preserve existing logged-in sessions
 
 ## Open questions & assumptions
 
 - "Average rating" computed across all rated items regardless of status
 - Bar chart window fixed to last 6 months from current date
 - Light mode not browser-verified; user to confirm visually in preview
+- Migration from old keys runs once on first load; assumed safe to retire old keys afterward
