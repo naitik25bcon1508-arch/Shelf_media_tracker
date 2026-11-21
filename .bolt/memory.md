@@ -19,6 +19,9 @@
 - Components share theme-aware color classes; contrast verified for both themes
 - UI surfaces: dashboard cards, add/edit form with suggestions dropdown, random-pick popup, stats cards, CSS bar chart, empty states, footer
 - Bar chart: plain CSS bars, items completed per month over last 6 months
+- Item cards: compact density — reduced padding, single-line title with ellipsis, smaller author/year font, scaled-down status badge and rating stars, smaller edit/delete icons that intensify on hover
+- Poster aspect ratio fixed at 2:3; poster fills card width at all breakpoints
+- Shelf grid responsive: 2 columns mobile, 3 tablet, 4 laptop, 5 large desktop; small gaps
 
 ## Decisions, constraints & rationale
 
@@ -27,6 +30,7 @@
 - Items have status (including "Done") and ratings; "Done" items count toward watch/read totals
 - Stats: total movies watched, total books read (status Done), average rating across rated items, completions-per-month bar chart (last 6 months)
 - Theme toggle appears on both sign-in and dashboard headers
+- Card compaction restricted to size/layout only; no feature or color changes, no new files
 
 ## Open questions & assumptions
 
